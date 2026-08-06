@@ -1,0 +1,292 @@
+// Zirna Rahbi EduTrack — Database Schema
+// This file is the single source of truth for the database structure.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// ENUMS
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  ADMIN
+  TEACHER
+  ASSISTANT
+  PARENT
+}
+
+enum ClassLevel {
+  CLASS_8
+  CLASS_9
+  CLASS_10
+  CLASS_11
+  CLASS_12
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum AssessmentType {
+  WEEKLY_TEST
+  MONTHLY_TEST
+  EXAM
+}
+
+enum BillingCycle {
+  MONTHLY
+  TERM
+  ANNUAL
+}
+
+enum FeeStatus {
+  PAID
+  PARTIAL
+  OVERDUE
+  PENDING
+}
+
+// ---------------------------------------------------------------------------
+// IDENTITY & ROLES
+// ---------------------------------------------------------------------------
+
+// Mirrors the Supabase `auth.users` table via a matching `id`.
+model User {
+  id        String   @id @map("_id") // Stores exact Supabase Auth UUID
+  email     String   @unique
+  fullName  String   @map("full_name")
+  role      UserRole
+  phone     String?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  staffProfile         StaffProfile?
+  parentLinks          ParentStudentLink[]
+  taughtSubjects       StudentSubject[]   @relation("TeacherOfSubject")
+  attendanceMarked     AttendanceRecord[] @relation("MarkedBy")
+  assessmentsCreated   Assessment[]       @relation("AssessmentCreatedBy")
+  marksEntered         AssessmentMark[]   @relation("MarksEnteredBy")
+  feePaymentsRecorded  FeePayment[]       @relation("FeeRecordedBy")
+  reportCardsGenerated ReportCard[]       @relation("ReportGeneratedBy")
+
+  @@map("users")
+}
+
+model StaffProfile {
+  id        String    @id @default(uuid()) @map("_id")
+  userId    String    @unique @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedDate DateTime? @map("joined_date")
+
+  @@map("staff_profiles")
+}
+
+// ---------------------------------------------------------------------------
+// STUDENTS & PARENTS
+// ---------------------------------------------------------------------------
+
+model Student {
+  id            String     @id @default(uuid()) @map("_id")
+  fullName      String     @map("full_name")
+  classLevel    ClassLevel @map("class_level")
+  section       String?
+  dateOfBirth   DateTime?  @map("date_of_birth")
+  admissionDate DateTime?  @map("admission_date")
+  schoolName    String?    @map("school_name")
+  contactPhone  String?    @map("contact_phone")
+  address       String?
+  photoUrl      String?    @map("photo_url")
+  isActive      Boolean    @default(true) @map("is_active")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  parentLinks       ParentStudentLink[]
+  subjects          StudentSubject[]
+  attendanceRecords AttendanceRecord[]
+  assessmentMarks   AssessmentMark[]
+  feePayments       FeePayment[]
+  reportCards       ReportCard[]
+
+  @@map("students")
+}
+
+model ParentStudentLink {
+  id           String  @id @default(uuid()) @map("_id")
+  parentUserId String  @map("parent_user_id")
+  parent       User    @relation(fields: [parentUserId], references: [id], onDelete: Cascade)
+  studentId    String  @map("student_id")
+  student      Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  relationship String? // e.g. "Father", "Mother", "Guardian"
+
+  @@unique([parentUserId, studentId])
+  @@map("parent_student_links")
+}
+
+// ---------------------------------------------------------------------------
+// SUBJECTS & CLASSES
+// ---------------------------------------------------------------------------
+
+model Subject {
+  id                String       @id @default(uuid()) @map("_id")
+  name              String       @unique
+  applicableClasses ClassLevel[] @map("applicable_classes")
+
+  studentSubjects   StudentSubject[]
+  assessments       Assessment[]
+  attendanceRecords AttendanceRecord[]
+
+  @@map("subjects")
+}
+
+model StudentSubject {
+  id        String  @id @default(uuid()) @map("_id")
+  studentId String  @map("student_id")
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subjectId String  @map("subject_id")
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacherId String? @map("teacher_id")
+  teacher   User?   @relation("TeacherOfSubject", fields: [teacherId], references: [id])
+
+  @@unique([studentId, subjectId])
+  @@map("student_subjects")
+}
+
+// ---------------------------------------------------------------------------
+// ATTENDANCE
+// ---------------------------------------------------------------------------
+
+model AttendanceRecord {
+  id           String           @id @default(uuid()) @map("_id")
+  studentId    String           @map("student_id")
+  student      Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  date         DateTime
+  status       AttendanceStatus
+  subjectId    String?          @map("subject_id")
+  subject      Subject?         @relation(fields: [subjectId], references: [id])
+  markedBy     String           @map("marked_by")
+  markedByUser User             @relation("MarkedBy", fields: [markedBy], references: [id])
+  createdAt    DateTime         @default(now()) @map("created_at")
+
+  @@unique([studentId, date, subjectId])
+  @@index([studentId, date])
+  @@map("attendance_records")
+}
+
+// ---------------------------------------------------------------------------
+// ASSESSMENTS
+// ---------------------------------------------------------------------------
+
+model Assessment {
+  id             String         @id @default(uuid()) @map("_id")
+  subjectId      String         @map("subject_id")
+  subject        Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  classLevel     ClassLevel     @map("class_level")
+  title          String
+  assessmentType AssessmentType @map("assessment_type")
+  maxMarks       Float          @map("max_marks")
+  date           DateTime
+  chapterTopic   String?        @map("chapter_topic")
+  createdBy      String         @map("created_by")
+  createdByUser  User           @relation("AssessmentCreatedBy", fields: [createdBy], references: [id])
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  marks AssessmentMark[]
+
+  @@index([subjectId, classLevel])
+  @@map("assessments")
+}
+
+model AssessmentMark {
+  id            String     @id @default(uuid()) @map("_id")
+  assessmentId  String     @map("assessment_id")
+  assessment    Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  studentId     String     @map("student_id")
+  student       Student    @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  marksObtained Float      @map("marks_obtained")
+  remarks       String?
+  enteredBy     String     @map("entered_by")
+  enteredByUser User       @relation("MarksEnteredBy", fields: [enteredBy], references: [id])
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  @@unique([assessmentId, studentId])
+  @@index([studentId])
+  @@map("assessment_marks")
+}
+
+// ---------------------------------------------------------------------------
+// FEES
+// ---------------------------------------------------------------------------
+
+model FeeStructure {
+  id            String       @id @default(uuid()) @map("_id")
+  classLevel    ClassLevel   @map("class_level")
+  amount        Float
+  billingCycle  BillingCycle @map("billing_cycle")
+  effectiveFrom DateTime     @map("effective_from")
+
+  @@map("fee_structures")
+}
+
+model FeePayment {
+  id             String    @id @default(uuid()) @map("_id")
+  studentId      String    @map("student_id")
+  student        Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  amountDue      Float     @map("amount_due")
+  amountPaid     Float     @default(0) @map("amount_paid")
+  dueDate        DateTime  @map("due_date")
+  paidDate       DateTime? @map("paid_date")
+  status         FeeStatus @default(PENDING)
+  paymentMethod  String?   @map("payment_method")
+  recordedBy     String    @map("recorded_by")
+  recordedByUser User      @relation("FeeRecordedBy", fields: [recordedBy], references: [id])
+  notes          String?
+
+  @@index([studentId])
+  @@map("fee_payments")
+}
+
+// ---------------------------------------------------------------------------
+// REPORT CARDS
+// ---------------------------------------------------------------------------
+
+model ReportCard {
+  id              String   @id @default(uuid()) @map("_id")
+  studentId       String   @map("student_id")
+  student         Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  periodLabel     String   @map("period_label")
+  generatedPdfUrl String   @map("generated_pdf_url")
+  generatedBy     String   @map("generated_by")
+  generatedByUser User     @relation("ReportGeneratedBy", fields: [generatedBy], references: [id])
+  generatedAt     DateTime @default(now()) @map("generated_at")
+
+  @@map("report_cards")
+}
+
+// ---------------------------------------------------------------------------
+// SETTINGS
+// ---------------------------------------------------------------------------
+
+model AtRiskSettings {
+  id                           String   @id @default(uuid()) @map("_id")
+  attendanceWindowDays         Int      @default(30) @map("attendance_window_days")
+  attendanceThresholdPercent   Int      @default(75) @map("attendance_threshold_percent")
+  averageRecentCount           Int      @default(5) @map("average_recent_count")
+  averageThresholdPercent      Int      @default(40) @map("average_threshold_percent")
+  consecutiveAbsencesThreshold Int      @default(3) @map("consecutive_absences_threshold")
+  trendWindowCount             Int      @default(3) @map("trend_window_count")
+  trendDeclineThresholdPoints  Int      @default(10) @map("trend_decline_threshold_points")
+  updatedAt                    DateTime @updatedAt @map("updated_at")
+  updatedBy                    String?  @map("updated_by")
+
+  @@map("at_risk_settings")
+}
