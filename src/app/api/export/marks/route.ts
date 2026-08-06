@@ -1,5 +1,6 @@
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
+import type { ClassLevel } from "@prisma/client";
 import { toCsv, csvResponse } from "@/lib/csv";
 import { CLASS_LABELS } from "@/lib/constants";
 
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
   const marks = await db.assessmentMark.findMany({
     where: {
       assessment: {
-        ...(classLevel ? { classLevel: classLevel as keyof typeof CLASS_LABELS } : {}),
+        ...(classLevel ? { classLevel: classLevel as ClassLevel } : {}),
         ...(subjectId ? { subjectId } : {}),
       },
     },

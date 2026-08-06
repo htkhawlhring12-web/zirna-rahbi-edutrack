@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import type { ClassLevel } from "@prisma/client";
 import { CLASS_LABELS, CLASS_OPTIONS } from "@/lib/constants";
 import { BulkAssignSubjectForm } from "@/components/forms/bulk-assign-subject-form";
 
@@ -25,7 +26,7 @@ export default async function StudentsPage({
     db.student.findMany({
       where: {
         ...(classLevel && classLevel in CLASS_LABELS
-          ? { classLevel: classLevel as keyof typeof CLASS_LABELS }
+          ? { classLevel: classLevel as ClassLevel }
           : {}),
         ...(section ? { section } : {}),
         ...(q ? { fullName: { contains: q, mode: "insensitive" } } : {}),

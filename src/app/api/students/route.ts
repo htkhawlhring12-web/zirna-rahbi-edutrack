@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
+import type { ClassLevel } from "@prisma/client";
 import { createStudentSchema } from "@/lib/validations/student";
 import { CLASS_LABELS } from "@/lib/constants";
 
@@ -25,9 +26,7 @@ export async function GET(request: Request) {
   const students = await db.student.findMany({
     where: {
       isActive: true,
-      ...(classLevel
-        ? { classLevel: classLevel as keyof typeof CLASS_LABELS }
-        : {}),
+      ...(classLevel ? { classLevel: classLevel as ClassLevel } : {}),
     },
     orderBy: [{ classLevel: "asc" }, { fullName: "asc" }],
   });

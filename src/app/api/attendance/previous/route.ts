@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
+import type { ClassLevel } from "@prisma/client";
 import { CLASS_LABELS } from "@/lib/constants";
 
 // GET /api/attendance/previous?classLevel=&subjectId=&beforeDate=
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
   }
 
   const students = await db.student.findMany({
-    where: { isActive: true, classLevel: classLevel as keyof typeof CLASS_LABELS },
+    where: { isActive: true, classLevel: classLevel as ClassLevel },
     select: { id: true },
   });
   const studentIds = students.map((s) => s.id);

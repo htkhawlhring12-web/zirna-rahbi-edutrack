@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
+import type { ClassLevel } from "@prisma/client";
 import { submitAttendanceSchema } from "@/lib/validations/attendance";
 import { CLASS_LABELS } from "@/lib/constants";
 
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
   }
 
   const students = await db.student.findMany({
-    where: { isActive: true, classLevel: classLevel as keyof typeof CLASS_LABELS },
+    where: { isActive: true, classLevel: classLevel as ClassLevel },
     orderBy: { fullName: "asc" },
   });
 
@@ -86,7 +87,7 @@ export async function POST(request: Request) {
           studentId_date_subjectId: {
             studentId: r.studentId,
             date: dateValue,
-            subjectId: subjectId ?? null,
+            subjectId: subjectId ?? "",
           },
         },
         update: { status: r.status, markedBy: currentUser.id },
