@@ -10,7 +10,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // under src/app/(admin), src/app/(teacher), src/app/(parent).
 const ROLE_ROUTES: { prefix: string; roles: string[] }[] = [
   { prefix: "/dashboard", roles: ["ADMIN"] },
-  { prefix: "/students", roles: ["ADMIN"] },
+  { prefix: "/students", roles: ["ADMIN", "ASSISTANT"] },
   { prefix: "/staff", roles: ["ADMIN"] },
   { prefix: "/fees", roles: ["ADMIN"] },
   { prefix: "/settings", roles: ["ADMIN"] },
