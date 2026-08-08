@@ -4,37 +4,84 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-// This page is where Supabase's "reset password" email link lands.
-// When someone clicks that link, Supabase logs them into a temporary
-// session and sends them here so they can choose a new password.
 export default function ResetPasswordPage() {
   const router = useRouter();
   const supabase = createClient();
 
   const [ready, setReady] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Wait for Supabase to detect the temporary recovery session from the
-  // emailed link before showing the form.
   useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
-        setReady(true);
+    async function handleRecoveryLink() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tokenHash = urlParams.get("token_hash");
+      const type = urlParams.get("type");
+      const code = urlParams.get("code");
+
+      // 1. Handle token_hash verification (common in modern Supabase SSR templates)
+      if (tokenHash && type === "recovery") {
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: "recovery",
+        });
+        if (!verifyError) {
+          setReady(true);
+          setChecking(false);
+          return;
+        } else {
+          setError(verifyError.message);
+        }
       }
-    });
 
-    // In case the session is already there by the time this loads.
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
-    });
+      // 2. Handle PKCE code exchange
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (!exchangeError) {
+          setReady(true);
+          setChecking(false);
+          return;
+        } else {
+          setError(exchangeError.message);
+        }
+      }
 
-    return () => {
-      listener.subscription.unsubscribe();
-    };
+      // 3. Check if a session already exists
+      const { data: existing } = await supabase.auth.getSession();
+      if (existing.session) {
+        setReady(true);
+        setChecking(false);
+        return;
+      }
+
+      // 4. Fallback: Legacy hash tokens
+      const hash = window.location.hash.startsWith("#")
+        ? window.location.hash.slice(1)
+        : window.location.hash;
+      const hashParams = new URLSearchParams(hash);
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token");
+
+      if (accessToken && refreshToken) {
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (!sessionError) {
+          setReady(true);
+          setChecking(false);
+          return;
+        }
+      }
+
+      setChecking(false);
+    }
+
+    handleRecoveryLink();
   }, [supabase]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -74,12 +121,19 @@ export default function ResetPasswordPage() {
           Set a new password
         </h1>
 
-        {!ready && !success && (
+        {checking && (
           <p className="mt-3 text-sm text-slate-500">
-            Confirming your reset link... if this message doesn&apos;t go
-            away within a few seconds, your link may have expired. Please
-            request a new password reset email and click it right away.
+            Confirming your reset link...
           </p>
+        )}
+
+        {!checking && !ready && !success && (
+          <div className="mt-3 space-y-3">
+            <p className="text-sm text-red-600">
+              This reset link is invalid or has expired. Please request a new password reset email and click it right away.
+            </p>
+            {error && <p className="text-xs text-red-500">Error: {error}</p>}
+          </div>
         )}
 
         {success && (
@@ -91,10 +145,7 @@ export default function ResetPasswordPage() {
         {ready && !success && (
           <form onSubmit={handleSubmit} className="mt-4 space-y-4">
             <div>
-              <label
-                className="mb-1 block text-xs font-medium text-slate-700"
-                htmlFor="password"
-              >
+              <label className="mb-1 block text-xs font-medium text-slate-700" htmlFor="password">
                 New password
               </label>
               <input
@@ -107,10 +158,7 @@ export default function ResetPasswordPage() {
               />
             </div>
             <div>
-              <label
-                className="mb-1 block text-xs font-medium text-slate-700"
-                htmlFor="confirmPassword"
-              >
+              <label className="mb-1 block text-xs font-medium text-slate-700" htmlFor="confirmPassword">
                 Confirm new password
               </label>
               <input
