@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 // POST /api/students -- admin creates a new student.
 export async function POST(request: Request) {
   try {
-    await requireRole(["ADMIN"]);
+    await requireRole(["ADMIN", "ASSISTANT"]);
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
