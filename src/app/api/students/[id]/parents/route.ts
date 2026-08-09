@@ -12,7 +12,7 @@ type RouteParams = { params: Promise<{ id: string }> };
 // GET /api/students/[id]/parents -- list parents linked to this student.
 export async function GET(_request: Request, { params }: RouteParams) {
   try {
-    await requireRole(["ADMIN"]);
+    await requireRole(["ADMIN", "ASSISTANT"]);
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
