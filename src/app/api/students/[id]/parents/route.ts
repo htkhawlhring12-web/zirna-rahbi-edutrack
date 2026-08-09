@@ -36,7 +36,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
 // recovery link returned to the admin, never a password typed or stored.
 export async function POST(request: Request, { params }: RouteParams) {
   try {
-    await requireRole(["ADMIN"]);
+   await requireRole(["ADMIN", "ASSISTANT"]);
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
