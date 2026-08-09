@@ -12,7 +12,7 @@ export default async function StudentsPage({
   searchParams: Promise<{ classLevel?: string; section?: string; q?: string }>;
 }) {
   const user = await getCurrentUser();
-  if (!user || user.role !== "ADMIN") redirect("/login");
+  if (!user || (user.role !== "ADMIN" && user.role !== "ASSISTANT")) redirect("/login");
 
   const { classLevel, section, q } = await searchParams;
 
