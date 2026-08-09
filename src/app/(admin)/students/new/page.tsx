@@ -4,7 +4,7 @@ import { CreateStudentForm } from "@/components/forms/create-student-form";
 
 export default async function NewStudentPage() {
   const user = await getCurrentUser();
-  if (!user || user.role !== "ADMIN") redirect("/login");
+  if (!user || (user.role !== "ADMIN" && user.role !== "ASSISTANT")) redirect("/login");
 
   return (
     <main className="mx-auto max-w-2xl p-8">
