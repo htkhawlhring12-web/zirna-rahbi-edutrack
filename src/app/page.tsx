@@ -17,10 +17,10 @@ export default async function Home() {
     case "ADMIN":
       redirect("/dashboard"); // Points straight to your dashboard folder
     case "TEACHER":
-    case "ASSISTANT":
-      redirect("/teacher");
+case "ASSISTANT":
+  redirect("/my-students");
     case "PARENT":
-      redirect("/parents");
+  redirect("/my-child");
     default:
       redirect("/login");
   }
