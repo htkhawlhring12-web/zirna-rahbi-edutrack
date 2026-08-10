@@ -29,14 +29,15 @@ export async function GET(_request: Request, { params }: RouteParams) {
 
 // POST /api/students/[id]/parents -- two modes, distinguished by body shape:
 //   { parentUserId, relationship }              -> link an existing parent
-//   { fullName, email, phone, relationship }     -> create a new parent + link
+//   { fullName, email, phone, relationship, password } -> create a new
+//     parent + link
 //
-// Creating a new parent follows the same pattern as staff account creation
-// (src/app/api/users/route.ts): a throwaway password + a one-time
-// recovery link returned to the admin, never a password typed or stored.
+// The admin/assistant types the parent's password directly in the form
+// and shares it with them in person -- many parents here don't have a
+// checkable email address, so we never rely on emailing a reset link.
 export async function POST(request: Request, { params }: RouteParams) {
   try {
-   await requireRole(["ADMIN", "ASSISTANT"]);
+    await requireRole(["ADMIN", "ASSISTANT"]);
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
@@ -95,13 +96,13 @@ export async function POST(request: Request, { params }: RouteParams) {
       { status: 400 }
     );
   }
-  const { fullName, email, phone, relationship } = parsed.data;
+  const { fullName, email, phone, relationship, password } = parsed.data;
 
   const supabaseAdmin = createAdminClient();
   const { data: created, error: createError } =
     await supabaseAdmin.auth.admin.createUser({
       email,
-      password: crypto.randomUUID(),
+      password,
       email_confirm: true,
       app_metadata: { role: "PARENT" },
       user_metadata: { full_name: fullName },
@@ -133,11 +134,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     );
   }
 
-  const { data: linkData, error: linkError } =
-    await supabaseAdmin.auth.admin.generateLink({ type: "recovery", email });
-
   return NextResponse.json({
     parent: { id: created.user.id, fullName, email },
-    setPasswordLink: linkError ? null : linkData?.properties?.action_link ?? null,
   });
 }
