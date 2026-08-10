@@ -4,6 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+// This page is where Supabase's "reset password" email link lands.
+// Supabase puts the temporary login info in the URL after a "#" symbol
+// (e.g. #access_token=...). This page reads that directly and uses it
+// to start a session, then lets the person choose a new password.
 export default function ResetPasswordPage() {
   const router = useRouter();
   const supabase = createClient();
@@ -18,39 +22,8 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     async function handleRecoveryLink() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tokenHash = urlParams.get("token_hash");
-      const type = urlParams.get("type");
-      const code = urlParams.get("code");
-
-      // 1. Handle token_hash verification (common in modern Supabase SSR templates)
-      if (tokenHash && type === "recovery") {
-        const { error: verifyError } = await supabase.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: "recovery",
-        });
-        if (!verifyError) {
-          setReady(true);
-          setChecking(false);
-          return;
-        } else {
-          setError(verifyError.message);
-        }
-      }
-
-      // 2. Handle PKCE code exchange
-      if (code) {
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-        if (!exchangeError) {
-          setReady(true);
-          setChecking(false);
-          return;
-        } else {
-          setError(exchangeError.message);
-        }
-      }
-
-      // 3. Check if a session already exists
+      // First, check if a session already exists (in case it was already
+      // picked up automatically).
       const { data: existing } = await supabase.auth.getSession();
       if (existing.session) {
         setReady(true);
@@ -58,13 +31,14 @@ export default function ResetPasswordPage() {
         return;
       }
 
-      // 4. Fallback: Legacy hash tokens
+      // Otherwise, manually read the tokens Supabase put after the "#" in
+      // the URL and use them to start a session ourselves.
       const hash = window.location.hash.startsWith("#")
         ? window.location.hash.slice(1)
         : window.location.hash;
-      const hashParams = new URLSearchParams(hash);
-      const accessToken = hashParams.get("access_token");
-      const refreshToken = hashParams.get("refresh_token");
+      const params = new URLSearchParams(hash);
+      const accessToken = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
 
       if (accessToken && refreshToken) {
         const { error: sessionError } = await supabase.auth.setSession({
@@ -78,6 +52,8 @@ export default function ResetPasswordPage() {
         }
       }
 
+      // No valid session and no usable tokens in the URL -- link is
+      // expired or invalid.
       setChecking(false);
     }
 
@@ -128,12 +104,11 @@ export default function ResetPasswordPage() {
         )}
 
         {!checking && !ready && !success && (
-          <div className="mt-3 space-y-3">
-            <p className="text-sm text-red-600">
-              This reset link is invalid or has expired. Please request a new password reset email and click it right away.
-            </p>
-            {error && <p className="text-xs text-red-500">Error: {error}</p>}
-          </div>
+          <p className="mt-3 text-sm text-red-600">
+            This reset link is invalid or has expired. Please ask an admin
+            to send a new password reset email, and click it as soon as it
+            arrives.
+          </p>
         )}
 
         {success && (
@@ -145,7 +120,10 @@ export default function ResetPasswordPage() {
         {ready && !success && (
           <form onSubmit={handleSubmit} className="mt-4 space-y-4">
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-700" htmlFor="password">
+              <label
+                className="mb-1 block text-xs font-medium text-slate-700"
+                htmlFor="password"
+              >
                 New password
               </label>
               <input
@@ -158,7 +136,10 @@ export default function ResetPasswordPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-700" htmlFor="confirmPassword">
+              <label
+                className="mb-1 block text-xs font-medium text-slate-700"
+                htmlFor="confirmPassword"
+              >
                 Confirm new password
               </label>
               <input
