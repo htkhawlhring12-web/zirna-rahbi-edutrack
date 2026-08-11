@@ -6,6 +6,7 @@ import { AssignSubjectForm } from "@/components/forms/assign-subject-form";
 import { LinkParentForm } from "@/components/forms/link-parent-form";
 import { ReportCardsSection } from "@/components/forms/report-cards-section";
 import { StudentFeesSection } from "@/components/forms/student-fees-section";
+import { DeleteStudentButton } from "@/components/forms/delete-student-button";
 
 export default async function StudentDetailPage({
   params,
@@ -58,11 +59,19 @@ export default async function StudentDetailPage({
             {student.schoolName ? ` · ${student.schoolName}` : ""}
           </p>
         </div>
-        {!student.isActive && (
-          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">
-            Inactive
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {!student.isActive && (
+            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-500">
+              Inactive
+            </span>
+          )}
+          {user.role === "ADMIN" && (
+            <DeleteStudentButton
+              studentId={student.id}
+              studentName={student.fullName}
+            />
+          )}
+        </div>
       </div>
 
       {/* Subjects */}
