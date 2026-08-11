@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { getAtRiskConfig } from "@/lib/at-risk-config";
 import { AtRiskSettingsForm } from "@/components/forms/at-risk-settings-form";
+import { CreateSubjectForm } from "@/components/forms/create-subject-form";
 
 export default async function SettingsPage() {
   const user = await getCurrentUser();
@@ -18,6 +19,10 @@ export default async function SettingsPage() {
 
       <div className="mt-6">
         <AtRiskSettingsForm initialConfig={config} />
+      </div>
+
+      <div className="mt-10">
+        <CreateSubjectForm />
       </div>
     </main>
   );
