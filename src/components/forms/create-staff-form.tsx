@@ -15,20 +15,23 @@ export function CreateStaffForm() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState("TEACHER");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [link, setLink] = useState<string | null>(null);
+  const [created, setCreated] = useState<{ email: string; password: string } | null>(
+    null
+  );
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    setLink(null);
+    setCreated(null);
     setLoading(true);
 
     const res = await fetch("/api/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fullName, email, phone, role }),
+      body: JSON.stringify({ fullName, email, phone, role, password }),
     });
 
     const data = await res.json();
@@ -43,11 +46,12 @@ export function CreateStaffForm() {
       return;
     }
 
-    setLink(data.setPasswordLink);
+    setCreated({ email, password });
     setFullName("");
     setEmail("");
     setPhone("");
     setRole("TEACHER");
+    setPassword("");
     router.refresh();
   }
 
@@ -125,6 +129,25 @@ export function CreateStaffForm() {
               ))}
             </select>
           </div>
+
+          <div>
+            <label
+              className="mb-1 block text-sm font-medium text-slate-700"
+              htmlFor="password"
+            >
+              Password to give them
+            </label>
+            <input
+              id="password"
+              type="text"
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="At least 8 characters"
+              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+            />
+          </div>
         </div>
 
         {error && (
@@ -142,15 +165,18 @@ export function CreateStaffForm() {
         </button>
       </form>
 
-      {link && (
+      {created && (
         <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 p-4">
           <p className="text-sm font-medium text-emerald-800">Account created.</p>
           <p className="mt-1 text-sm text-emerald-700">
-            Share this one-time link with them so they can set their own
-            password. It expires after use.
+            Share these login details with them directly (in person, on
+            paper, etc). They can log in right away.
           </p>
-          <p className="mt-2 break-all rounded bg-white px-2 py-1 text-xs text-slate-600">
-            {link}
+          <p className="mt-2 rounded bg-white px-2 py-1 text-xs text-slate-600">
+            Email: {created.email}
+          </p>
+          <p className="mt-1 rounded bg-white px-2 py-1 text-xs text-slate-600">
+            Password: {created.password}
           </p>
         </div>
       )}

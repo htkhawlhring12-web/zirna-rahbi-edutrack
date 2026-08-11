@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { CreateStaffForm } from "@/components/forms/create-staff-form";
+import { DeleteStaffButton } from "@/components/forms/delete-staff-button";
 
 export default async function StaffPage() {
   const user = await getCurrentUser();
@@ -37,9 +38,14 @@ export default async function StaffPage() {
                 </p>
                 <p className="text-xs text-slate-500">{s.email}</p>
               </div>
-              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-                {s.role}
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                  {s.role}
+                </span>
+                {s.id !== user.id && (
+                  <DeleteStaffButton userId={s.id} userName={s.fullName} />
+                )}
+              </div>
             </li>
           ))}
           {staff.length === 0 && (
