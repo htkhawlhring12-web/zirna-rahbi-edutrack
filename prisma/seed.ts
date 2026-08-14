@@ -2,25 +2,18 @@ import { PrismaClient } from "@prisma/client";
 
 const db = new PrismaClient();
 
+const SUBJECTS = ["Mathematics", "Physics", "Chemistry"];
+const ALL_CLASSES = ["CLASS_8", "CLASS_9", "CLASS_10", "CLASS_11", "CLASS_12"] as const;
+
 async function main() {
-  const adminEmail = "htkhawlhring12@gmail.com";
-  const supabaseUserId = "b71effc8-7ac5-491e-81b0-162f4aebb873"; 
-
-  // Remove old record with mismatched ID
-  await db.user.deleteMany({ where: { email: adminEmail } });
-
-  // Create MongoDB user with matching Supabase UID
-  const admin = await db.user.create({
-    data: {
-      id: supabaseUserId,
-      email: adminEmail,
-      fullName: "Centre Admin",
-      role: "ADMIN",
-      isActive: true,
-    },
-  });
-
-  console.log(`Successfully synced Admin User: ${admin.email} (ID: ${admin.id})`);
+  for (const name of SUBJECTS) {
+    const subject = await db.subject.upsert({
+      where: { name },
+      update: { applicableClasses: [...ALL_CLASSES] },
+      create: { name, applicableClasses: [...ALL_CLASSES] },
+    });
+    console.log(`Seeded subject: ${subject.name}`);
+  }
 }
 
 main()
