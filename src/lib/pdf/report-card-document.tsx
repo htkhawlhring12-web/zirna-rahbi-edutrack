@@ -126,7 +126,7 @@ export function ReportCardDocument({ data }: { data: ReportCardData }) {
           <View>
             <Text style={styles.studentLabel}>Generated</Text>
             <Text style={styles.studentValue}>
-              {data.generatedAt.toLocaleDateString()}
+              {data.generatedAt.toLocaleDateString('en-GB')}
             </Text>
           </View>
         </View>
@@ -178,9 +178,9 @@ export function ReportCardDocument({ data }: { data: ReportCardData }) {
         </View>
 
         <Text style={styles.footer}>
-          {data.centreName} · Generated on {data.generatedAt.toLocaleDateString()} via
-          Zirna Rahbi EduTrack
-        </Text>
+  {data.centreName} · Generated on {data.generatedAt.toLocaleDateString('en-GB')} via
+  Zirna Rahbi EduTrack
+</Text>
       </Page>
     </Document>
   );

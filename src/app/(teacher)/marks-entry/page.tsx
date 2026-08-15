@@ -50,7 +50,7 @@ export default async function MarksEntryPage() {
                   <p className="text-xs text-slate-500">
                     {a.subject.name} · {CLASS_LABELS[a.classLevel]} ·{" "}
                     {TYPE_LABELS[a.assessmentType]} ·{" "}
-                    {new Date(a.date).toLocaleDateString()}
+                    new Date(a.date).{new Date(a.date).toLocaleDateString('en-GB')}
                   </p>
                 </div>
                 <span className="text-xs text-slate-400">

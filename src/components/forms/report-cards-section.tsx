@@ -120,7 +120,7 @@ export function ReportCardsSection({
             <div>
               <p className="text-sm font-medium text-slate-900">{rc.periodLabel}</p>
               <p className="text-xs text-slate-500">
-                Generated {new Date(rc.generatedAt).toLocaleDateString()}
+                Generated {new Date(rc.generatedAt).toLocaleDateString('en-GB')}
               </p>
             </div>
             <a

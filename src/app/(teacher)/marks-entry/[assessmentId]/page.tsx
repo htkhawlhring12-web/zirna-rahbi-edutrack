@@ -52,7 +52,7 @@ export default async function AssessmentMarksPage({
       <p className="mt-1 text-sm text-slate-500">
         {assessment.subject.name} · {CLASS_LABELS[assessment.classLevel]} · Max
         marks {Number(assessment.maxMarks)} ·{" "}
-        {new Date(assessment.date).toLocaleDateString()}
+        {new Date(assessment.date).toLocaleDateString('en-GB')}
       </p>
 
       <div className="mt-6">

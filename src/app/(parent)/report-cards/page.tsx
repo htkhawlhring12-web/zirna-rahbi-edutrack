@@ -51,7 +51,7 @@ export default async function ReportCardsPage({
             <div>
               <p className="text-sm font-medium text-slate-900">{rc.periodLabel}</p>
               <p className="text-xs text-slate-500">
-                Generated {rc.generatedAt.toLocaleDateString()}
+                Generated {rc.generatedAt.toLocaleDateString('en-GB')}
               </p>
             </div>
             <a

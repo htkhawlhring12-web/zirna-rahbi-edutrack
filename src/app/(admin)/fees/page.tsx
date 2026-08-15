@@ -66,7 +66,7 @@ export default async function FeesPage() {
               </p>
               <p className="text-xs text-slate-500">
                 ₹{Number(fs.amount)} · {CYCLE_LABELS[fs.billingCycle]} · effective{" "}
-                {fs.effectiveFrom.toLocaleDateString()}
+                {fs.effectiveFrom.toLocaleDateString('en-GB')}
               </p>
             </li>
           ))}

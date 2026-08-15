@@ -126,12 +126,12 @@ export default async function MyChildPage({
             <li key={p.id} className="flex items-center justify-between px-4 py-3">
               <div>
                 <p className="text-sm font-medium text-slate-900">
-                  ₹{Number(p.amountDue)} due {p.dueDate.toLocaleDateString()}
+                  ₹{Number(p.amountDue)} due {p.dueDate.toLocaleDateString('en-GB')}
                 </p>
                 {Number(p.amountPaid) > 0 && (
                   <p className="text-xs text-slate-500">
                     ₹{Number(p.amountPaid)} paid
-                    {p.paidDate ? ` on ${p.paidDate.toLocaleDateString()}` : ""}
+                    {p.paidDate ? ` on ${p.paidDate.toLocaleDateString('en-GB')}` : ""}
                   </p>
                 )}
               </div>

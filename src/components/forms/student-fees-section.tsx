@@ -60,11 +60,11 @@ function RecordPaymentRow({ payment }: { payment: FeePayment }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-sm font-medium text-slate-900">
-            ₹{payment.amountDue} due {new Date(payment.dueDate).toLocaleDateString()}
+            ₹{payment.amountDue} due {new Date(payment.dueDate).toLocaleDateString('en-GB')}
           </p>
           <p className="text-xs text-slate-500">
             {payment.amountPaid > 0
-              ? `₹${payment.amountPaid} paid${payment.paidDate ? ` on ${new Date(payment.paidDate).toLocaleDateString()}` : ""}`
+              ? `₹${payment.amountPaid} paid${payment.paidDate ? ` on ${new Date(payment.paidDate).toLocaleDateString('en-GB')}` : ""}`
               : "No payment recorded yet"}
           </p>
         </div>
