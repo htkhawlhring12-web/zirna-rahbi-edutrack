@@ -18,11 +18,19 @@ function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function RecordPaymentRow({ payment }: { payment: FeePayment }) {
+function RecordPaymentRow({
+  payment,
+  onDeleted,
+}: {
+  payment: FeePayment;
+  onDeleted: (id: string) => void;
+}) {
   const router = useRouter();
-  const [editing, setEditing] = useState(false);
+  const [mode, setMode] = useState<"view" | "pay" | "edit">("view");
   const [amountPaid, setAmountPaid] = useState(String(payment.amountPaid || payment.amountDue));
   const [paymentMethod, setPaymentMethod] = useState("");
+  const [editAmountDue, setEditAmountDue] = useState(String(payment.amountDue));
+  const [editDueDate, setEditDueDate] = useState(payment.dueDate.slice(0, 10));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +41,7 @@ function RecordPaymentRow({ payment }: { payment: FeePayment }) {
     amountPaid: payment.amountPaid,
   });
 
-  async function handleSave(e: FormEvent) {
+  async function handleSavePayment(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -51,7 +59,53 @@ function RecordPaymentRow({ payment }: { payment: FeePayment }) {
       return;
     }
 
-    setEditing(false);
+    setMode("view");
+    router.refresh();
+  }
+
+  async function handleSaveEdit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    const res = await fetch(`/api/fee-payments/${payment.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amountDue: editAmountDue,
+        dueDate: editDueDate,
+        amountPaid: payment.amountPaid,
+      }),
+    });
+
+    setLoading(false);
+
+    if (!res.ok) {
+      setError("Could not save the changes.");
+      return;
+    }
+
+    setMode("view");
+    router.refresh();
+  }
+
+  async function handleDelete() {
+    if (!confirm("Delete this fee due? This cannot be undone.")) return;
+    setLoading(true);
+    setError(null);
+
+    const res = await fetch(`/api/fee-payments/${payment.id}`, {
+      method: "DELETE",
+    });
+
+    setLoading(false);
+
+    if (!res.ok) {
+      setError("Could not delete this fee due.");
+      return;
+    }
+
+    onDeleted(payment.id);
     router.refresh();
   }
 
@@ -68,7 +122,7 @@ function RecordPaymentRow({ payment }: { payment: FeePayment }) {
               : "No payment recorded yet"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <FeeStatusBadge
             payment={{
               status: payment.status,
@@ -80,17 +134,32 @@ function RecordPaymentRow({ payment }: { payment: FeePayment }) {
           {effectiveStatus !== "PAID" && (
             <button
               type="button"
-              onClick={() => setEditing((v) => !v)}
+              onClick={() => setMode((m) => (m === "pay" ? "view" : "pay"))}
               className="text-xs font-medium text-slate-600 underline hover:text-slate-900"
             >
-              {editing ? "Cancel" : "Record payment"}
+              {mode === "pay" ? "Cancel" : "Record payment"}
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => setMode((m) => (m === "edit" ? "view" : "edit"))}
+            className="text-xs font-medium text-slate-600 underline hover:text-slate-900"
+          >
+            {mode === "edit" ? "Cancel" : "Edit"}
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={loading}
+            className="text-xs font-medium text-red-600 underline hover:text-red-800 disabled:opacity-60"
+          >
+            Delete
+          </button>
         </div>
       </div>
 
-      {editing && (
-        <form onSubmit={handleSave} className="mt-3 flex flex-wrap items-end gap-2">
+      {mode === "pay" && (
+        <form onSubmit={handleSavePayment} className="mt-3 flex flex-wrap items-end gap-2">
           <div>
             <label className="mb-1 block text-xs font-medium text-slate-700">
               Amount paid
@@ -122,9 +191,46 @@ function RecordPaymentRow({ payment }: { payment: FeePayment }) {
           >
             {loading ? "Saving..." : "Save"}
           </button>
-          {error && <p className="w-full text-xs text-red-600">{error}</p>}
         </form>
       )}
+
+      {mode === "edit" && (
+        <form onSubmit={handleSaveEdit} className="mt-3 flex flex-wrap items-end gap-2">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-700">
+              Amount due
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={editAmountDue}
+              onChange={(e) => setEditAmountDue(e.target.value)}
+              className="w-28 rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-slate-700">
+              Due date
+            </label>
+            <input
+              type="date"
+              value={editDueDate}
+              onChange={(e) => setEditDueDate(e.target.value)}
+              className="rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-slate-800 disabled:opacity-60"
+          >
+            {loading ? "Saving..." : "Save"}
+          </button>
+        </form>
+      )}
+
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
     </li>
   );
 }
@@ -167,6 +273,10 @@ export function StudentFeesSection({
     setPayments((prev) => [data.feePayment, ...prev]);
     setAmountDue("");
     router.refresh();
+  }
+
+  function handleDeleted(id: string) {
+    setPayments((prev) => prev.filter((p) => p.id !== id));
   }
 
   return (
@@ -216,7 +326,7 @@ export function StudentFeesSection({
 
       <ul className="mt-4 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
         {payments.map((p) => (
-          <RecordPaymentRow key={p.id} payment={p} />
+          <RecordPaymentRow key={p.id} payment={p} onDeleted={handleDeleted} />
         ))}
         {payments.length === 0 && (
           <li className="px-4 py-6 text-center text-sm text-slate-400">
