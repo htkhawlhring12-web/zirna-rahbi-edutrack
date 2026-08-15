@@ -18,7 +18,7 @@ export default async function FeesPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== "ADMIN") redirect("/login");
 
-  const [feeStructures, feePayments] = await Promise.all([
+  const [feeStructures, feePayments, totals] = await Promise.all([
     db.feeStructure.findMany({
       orderBy: [{ classLevel: "asc" }, { effectiveFrom: "desc" }],
     }),
@@ -26,6 +26,10 @@ export default async function FeesPage() {
       include: { student: true },
       orderBy: { dueDate: "desc" },
       take: 50,
+    }),
+    db.feePayment.aggregate({
+      _sum: { amountDue: true, amountPaid: true },
+      _count: { _all: true },
     }),
   ]);
 
@@ -45,6 +49,11 @@ export default async function FeesPage() {
       }) !== "PAID"
   ).length;
 
+  const totalDue = Number(totals._sum.amountDue ?? 0);
+  const totalPaid = Number(totals._sum.amountPaid ?? 0);
+  const totalOutstanding = totalDue - totalPaid;
+  const percentCollected = totalDue > 0 ? Math.round((totalPaid / totalDue) * 100) : 0;
+
   return (
     <main className="mx-auto max-w-3xl p-8">
       <h1 className="text-lg font-semibold text-slate-900">Fees</h1>
@@ -54,6 +63,31 @@ export default async function FeesPage() {
       </p>
 
       <section className="mt-6">
+        <h2 className="text-sm font-medium text-slate-700">Revenue overview</h2>
+        <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <p className="text-xs text-slate-500">Total due</p>
+            <p className="mt-1 text-lg font-semibold text-slate-900">₹{totalDue}</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <p className="text-xs text-slate-500">Total collected</p>
+            <p className="mt-1 text-lg font-semibold text-slate-900">₹{totalPaid}</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <p className="text-xs text-slate-500">Outstanding</p>
+            <p className="mt-1 text-lg font-semibold text-slate-900">₹{totalOutstanding}</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <p className="text-xs text-slate-500">% collected</p>
+            <p className="mt-1 text-lg font-semibold text-slate-900">{percentCollected}%</p>
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-slate-400">
+          Based on {totals._count._all} fee record{totals._count._all === 1 ? "" : "s"} total.
+        </p>
+      </section>
+
+      <section className="mt-8">
         <h2 className="text-sm font-medium text-slate-700">Fee structure by class</h2>
         <div className="mt-2 rounded-lg border border-slate-200 bg-white p-4">
           <FeeStructureForm />
@@ -112,7 +146,7 @@ export default async function FeesPage() {
                     {p.student.fullName}
                   </p>
                   <p className="text-xs text-slate-500">
-                    ₹{Number(p.amountDue)} due {p.dueDate.toLocaleDateString()}
+                    ₹{Number(p.amountDue)} due {p.dueDate.toLocaleDateString('en-GB')}
                   </p>
                 </div>
                 <FeeStatusBadge
