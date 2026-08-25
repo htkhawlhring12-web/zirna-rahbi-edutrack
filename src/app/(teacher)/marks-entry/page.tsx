@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { CLASS_LABELS } from "@/lib/constants";
 import { CreateAssessmentForm } from "@/components/forms/create-assessment-form";
+import { DeleteAssessmentButton } from "@/components/forms/delete-assessment-button";
 
 const TYPE_LABELS: Record<string, string> = {
   WEEKLY_TEST: "Weekly Test",
@@ -40,23 +41,23 @@ export default async function MarksEntryPage() {
         <h2 className="text-sm font-medium text-slate-700">Recent assessments</h2>
         <ul className="mt-3 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
           {assessments.map((a) => (
-            <li key={a.id}>
-              <Link
-                href={`/marks-entry/${a.id}`}
-                className="flex items-center justify-between px-4 py-3 hover:bg-slate-50"
-              >
-                <div>
-                  <p className="text-sm font-medium text-slate-900">{a.title}</p>
-                  <p className="text-xs text-slate-500">
-                    {a.subject.name} · {CLASS_LABELS[a.classLevel]} ·{" "}
-                    {TYPE_LABELS[a.assessmentType]} ·{" "}
-                    new Date(a.date).{new Date(a.date).toLocaleDateString('en-GB')}
-                  </p>
-                </div>
+            <li key={a.id} className="flex items-center justify-between px-4 py-3 hover:bg-slate-50">
+              <Link href={`/marks-entry/${a.id}`} className="flex-1">
+                <p className="text-sm font-medium text-slate-900">{a.title}</p>
+                <p className="text-xs text-slate-500">
+                  {a.subject.name} · {CLASS_LABELS[a.classLevel]} ·{" "}
+                  {TYPE_LABELS[a.assessmentType]} ·{" "}
+                  {new Date(a.date).toLocaleDateString('en-GB')} · Max {Number(a.maxMarks)}
+                </p>
+              </Link>
+              <div className="flex items-center gap-3">
                 <span className="text-xs text-slate-400">
                   {a._count.marks} mark{a._count.marks === 1 ? "" : "s"} entered
                 </span>
-              </Link>
+                {user.role === "ADMIN" && (
+                  <DeleteAssessmentButton assessmentId={a.id} assessmentTitle={a.title} />
+                )}
+              </div>
             </li>
           ))}
           {assessments.length === 0 && (
