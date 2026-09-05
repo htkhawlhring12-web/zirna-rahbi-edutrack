@@ -15,7 +15,7 @@ export function MonthlyRevenueChart({ data }: { data: MonthlyPoint[] }) {
         <BarChart data={data}>
           <XAxis dataKey="month" tick={{ fontSize: 12 }} />
           <YAxis tick={{ fontSize: 12 }} />
-          <Tooltip formatter={(value: number) => `₹${value}`} />
+          <Tooltip formatter={(value) => `₹${value}`} />
           <Legend />
           <Bar dataKey="due" name="Due" fill="#94a3b8" radius={[4, 4, 0, 0]} />
           <Bar dataKey="collected" name="Collected" fill="#0f172a" radius={[4, 4, 0, 0]} />
