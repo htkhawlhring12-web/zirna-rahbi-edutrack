@@ -130,20 +130,25 @@ export default async function FeesPage({
       <section className="mt-8">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-medium text-slate-700">Month</h2>
-          <form method="GET">
-            <select
-              name="month"
-              defaultValue={selectedMonth}
-              onChange={(e) => e.currentTarget.form?.submit()}
-              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
-            >
-              {availableMonths.map((key) => (
-                <option key={key} value={key}>
-                  {monthLabel(key)}
-                </option>
-              ))}
-            </select>
-          </form>
+          <form method="GET" className="flex items-center gap-2">
+  <select
+    name="month"
+    defaultValue={selectedMonth}
+    className="rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+  >
+    {availableMonths.map((key) => (
+      <option key={key} value={key}>
+        {monthLabel(key)}
+      </option>
+    ))}
+  </select>
+  <button
+    type="submit"
+    className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+  >
+    Go
+  </button>
+</form>
         </div>
 
         <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
