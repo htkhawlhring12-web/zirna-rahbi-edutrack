@@ -5,6 +5,62 @@ import { useRouter } from "next/navigation";
 
 type ReportCard = { id: string; periodLabel: string; generatedAt: string };
 
+function ReportCardRow({
+  rc,
+  onDeleted,
+}: {
+  rc: ReportCard;
+  onDeleted: (id: string) => void;
+}) {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  async function handleDelete() {
+    if (!confirm(`Delete "${rc.periodLabel}"? This cannot be undone.`)) return;
+    setLoading(true);
+
+    const res = await fetch(`/api/report-cards/${rc.id}`, { method: "DELETE" });
+    setLoading(false);
+
+    if (!res.ok) {
+      alert("Could not delete this report card.");
+      return;
+    }
+
+    onDeleted(rc.id);
+    router.refresh();
+  }
+
+  return (
+    <li className="flex items-center justify-between px-4 py-3">
+      <div>
+        <p className="text-sm font-medium text-slate-900">{rc.periodLabel}</p>
+        <p className="text-xs text-slate-500">
+          Generated {new Date(rc.generatedAt).toLocaleDateString('en-GB')}
+        </p>
+      </div>
+      <div className="flex items-center gap-3">
+        
+          href={`/api/report-cards/${rc.id}/download`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm font-medium text-slate-700 underline hover:text-slate-900"
+        >
+          Download
+        </a>
+        <button
+          type="button"
+          onClick={handleDelete}
+          disabled={loading}
+          className="text-sm font-medium text-red-600 underline hover:text-red-800 disabled:opacity-60"
+        >
+          Delete
+        </button>
+      </div>
+    </li>
+  );
+}
+
 export function ReportCardsSection({
   studentId,
   initialReportCards,
@@ -50,6 +106,10 @@ export function ReportCardsSection({
     setSinceDate("");
     setUntilDate("");
     router.refresh();
+  }
+
+  function handleDeleted(id: string) {
+    setReportCards((prev) => prev.filter((rc) => rc.id !== id));
   }
 
   return (
@@ -116,22 +176,7 @@ export function ReportCardsSection({
 
       <ul className="mt-4 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
         {reportCards.map((rc) => (
-          <li key={rc.id} className="flex items-center justify-between px-4 py-3">
-            <div>
-              <p className="text-sm font-medium text-slate-900">{rc.periodLabel}</p>
-              <p className="text-xs text-slate-500">
-                Generated {new Date(rc.generatedAt).toLocaleDateString('en-GB')}
-              </p>
-            </div>
-            <a
-              href={`/api/report-cards/${rc.id}/download`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-slate-700 underline hover:text-slate-900"
-            >
-              Download
-            </a>
-          </li>
+          <ReportCardRow key={rc.id} rc={rc} onDeleted={handleDeleted} />
         ))}
         {reportCards.length === 0 && (
           <li className="px-4 py-6 text-center text-sm text-slate-400">
