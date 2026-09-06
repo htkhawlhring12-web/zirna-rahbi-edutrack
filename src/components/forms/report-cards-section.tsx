@@ -39,8 +39,8 @@ function ReportCardRow({
           Generated {new Date(rc.generatedAt).toLocaleDateString('en-GB')}
         </p>
       </div>
-      <div className="flex items-center gap-3">
-        
+              <div className="flex items-center gap-3">
+          
           href={`/api/report-cards/${rc.id}/download`}
           target="_blank"
           rel="noopener noreferrer"
