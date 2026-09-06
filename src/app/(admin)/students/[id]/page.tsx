@@ -6,6 +6,7 @@ import { AssignSubjectForm } from "@/components/forms/assign-subject-form";
 import { LinkParentForm } from "@/components/forms/link-parent-form";
 import { ReportCardsSection } from "@/components/forms/report-cards-section";
 import { StudentFeesSection } from "@/components/forms/student-fees-section";
+import { DeleteStudentButton } from "@/components/forms/delete-student-button";
 import { ToggleActiveButton } from "@/components/forms/toggle-active-button";
 
 export default async function StudentDetailPage({
