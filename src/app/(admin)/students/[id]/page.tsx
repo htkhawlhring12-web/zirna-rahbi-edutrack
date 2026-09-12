@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { CLASS_LABELS } from "@/lib/constants";
 import { AssignSubjectForm } from "@/components/forms/assign-subject-form";
+import { EditSubjectTeacher } from "@/components/forms/edit-subject-teacher";
 import { LinkParentForm } from "@/components/forms/link-parent-form";
 import { ReportCardsSection } from "@/components/forms/report-cards-section";
 import { StudentFeesSection } from "@/components/forms/student-fees-section";
@@ -82,6 +83,7 @@ export default async function StudentDetailPage({
       </div>
 
       {/* Subjects */}
+            {/* Subjects */}
       <section className="mt-8">
         <h2 className="text-sm font-medium text-slate-700">Subjects</h2>
         <ul className="mt-3 divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
@@ -98,6 +100,12 @@ export default async function StudentDetailPage({
                   {ss.teacher ? ss.teacher.fullName : "No teacher assigned"}
                 </p>
               </div>
+              <EditSubjectTeacher
+                studentId={student.id}
+                studentSubjectId={ss.id}
+                currentTeacherId={ss.teacherId ?? ""}
+                staff={staff}
+              />
             </li>
           ))}
           {student.subjects.length === 0 && (
