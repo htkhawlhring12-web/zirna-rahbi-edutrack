@@ -79,6 +79,7 @@ model User {
   marksEntered         AssessmentMark[]   @relation("MarksEnteredBy")
   feePaymentsRecorded  FeePayment[]       @relation("FeeRecordedBy")
   reportCardsGenerated ReportCard[]       @relation("ReportGeneratedBy")
+  chaptersCompleted    ChapterProgress[]
 
   @@map("users")
 }
@@ -145,6 +146,7 @@ model Subject {
   studentSubjects   StudentSubject[]
   assessments       Assessment[]
   attendanceRecords AttendanceRecord[]
+  chapters          Chapter[]
 
   @@map("subjects")
 }
@@ -290,4 +292,35 @@ model AtRiskSettings {
   updatedBy                    String?  @map("updated_by")
 
   @@map("at_risk_settings")
+}
+
+// ---------------------------------------------------------------------------
+// CHAPTER / SYLLABUS PROGRESS
+// ---------------------------------------------------------------------------
+
+model Chapter {
+  id         String     @id @default(uuid())
+  subjectId  String     @map("subject_id")
+  subject    Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  classLevel ClassLevel @map("class_level")
+  title      String
+  orderIndex Int        @default(0) @map("order_index")
+  createdAt  DateTime   @default(now()) @map("created_at")
+
+  progress ChapterProgress?
+
+  @@index([subjectId, classLevel])
+  @@map("chapters")
+}
+
+model ChapterProgress {
+  id          String    @id @default(uuid())
+  chapterId   String    @unique @map("chapter_id")
+  chapter     Chapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  completedAt DateTime? @map("completed_at")
+  completedBy String?   @map("completed_by")
+  teacher     User?     @relation(fields: [completedBy], references: [id])
+  notes       String?
+
+  @@map("chapter_progress")
 }
