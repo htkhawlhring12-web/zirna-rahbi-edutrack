@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { CreateStaffForm } from "@/components/forms/create-staff-form";
 import { DeleteStaffButton } from "@/components/forms/delete-staff-button";
+import { ToggleStaffActiveButton } from "@/components/forms/toggle-staff-active-button";
 
 export default async function StaffPage() {
   const user = await getCurrentUser();
@@ -35,6 +36,11 @@ export default async function StaffPage() {
               <div>
                 <p className="text-sm font-medium text-slate-900">
                   {s.fullName}
+                  {!s.isActive && (
+                    <span className="ml-2 text-xs font-normal text-slate-400">
+                      (inactive)
+                    </span>
+                  )}
                 </p>
                 <p className="text-xs text-slate-500">{s.email}</p>
               </div>
@@ -42,6 +48,9 @@ export default async function StaffPage() {
                 <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
                   {s.role}
                 </span>
+                {s.id !== user.id && (
+                  <ToggleStaffActiveButton userId={s.id} isActive={s.isActive} />
+                )}
                 {s.id !== user.id && (
                   <DeleteStaffButton userId={s.id} userName={s.fullName} />
                 )}
