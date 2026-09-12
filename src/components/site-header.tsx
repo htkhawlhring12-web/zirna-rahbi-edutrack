@@ -8,6 +8,7 @@ const NAV_BY_ROLE: Record<string, { href: string; label: string }[]> = {
   ADMIN: [
     { href: "/dashboard", label: "Dashboard" },
     { href: "/students", label: "Students" },
+    { href: "/chapters", label: "Chapters" },
     { href: "/staff", label: "Staff" },
     { href: "/attendance", label: "Attendance" },
     { href: "/marks-entry", label: "Marks Entry" },

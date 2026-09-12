@@ -13,6 +13,7 @@ const ROLE_ROUTES: { prefix: string; roles: string[] }[] = [
   { prefix: "/students", roles: ["ADMIN", "ASSISTANT"] },
   { prefix: "/staff", roles: ["ADMIN"] },
   { prefix: "/fees", roles: ["ADMIN"] },
+  { prefix: "/chapters", roles: ["ADMIN"] },
   { prefix: "/settings", roles: ["ADMIN"] },
   { prefix: "/export", roles: ["ADMIN"] },
   { prefix: "/attendance", roles: ["ADMIN", "TEACHER", "ASSISTANT"] },
