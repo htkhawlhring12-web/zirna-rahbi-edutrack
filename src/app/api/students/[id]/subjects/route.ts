@@ -41,63 +41,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     );
   }
 }
-// PATCH /api/students/[id]/subjects -- admin changes the teacher on an
-// already-assigned subject, without removing/recreating the assignment.
-export async function PATCH(request: Request, { params }: RouteParams) {
-  try {
-    await requireRole(["ADMIN"]);
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
 
-  const { id: studentId } = await params;
-  const body = await request.json();
-  const { studentSubjectId, teacherId } = body;
-
-  if (!studentSubjectId) {
-    return NextResponse.json(
-      { error: "studentSubjectId is required" },
-      { status: 400 }
-    );
-  }
-
-  const studentSubject = await db.studentSubject.updateMany({
-    where: { id: studentSubjectId, studentId },
-    data: { teacherId: teacherId || null },
-  });
-
-  if (studentSubject.count === 0) {
-    return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
-  }
-
-  return NextResponse.json({ success: true });
-}
-// DELETE /api/students/[id]/subjects?studentSubjectId=... -- admin removes
-// a subject assignment.
-export async function DELETE(request: Request, { params }: RouteParams) {
-  try {
-    await requireRole(["ADMIN"]);
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
-  }
-
-  const { id: studentId } = await params;
-  const { searchParams } = new URL(request.url);
-  const studentSubjectId = searchParams.get("studentSubjectId");
-
-  if (!studentSubjectId) {
-    return NextResponse.json(
-      { error: "studentSubjectId is required" },
-      { status: 400 }
-    );
-  }
-
-  await db.studentSubject.deleteMany({
-    where: { id: studentSubjectId, studentId },
-  });
-
-  return NextResponse.json({ success: true });
-}
 // PATCH /api/students/[id]/subjects -- admin changes the teacher on an
 // already-assigned subject, without removing and recreating the link.
 export async function PATCH(request: Request, { params }: RouteParams) {
@@ -125,4 +69,31 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   });
 
   return NextResponse.json({ studentSubject });
+}
+
+// DELETE /api/students/[id]/subjects?studentSubjectId=... -- admin removes
+// a subject assignment.
+export async function DELETE(request: Request, { params }: RouteParams) {
+  try {
+    await requireRole(["ADMIN"]);
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  }
+
+  const { id: studentId } = await params;
+  const { searchParams } = new URL(request.url);
+  const studentSubjectId = searchParams.get("studentSubjectId");
+
+  if (!studentSubjectId) {
+    return NextResponse.json(
+      { error: "studentSubjectId is required" },
+      { status: 400 }
+    );
+  }
+
+  await db.studentSubject.deleteMany({
+    where: { id: studentSubjectId, studentId },
+  });
+
+  return NextResponse.json({ success: true });
 }
