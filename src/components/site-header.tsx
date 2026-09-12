@@ -15,16 +15,19 @@ const NAV_BY_ROLE: Record<string, { href: string; label: string }[]> = {
     { href: "/fees", label: "Fees" },
     { href: "/export", label: "Export" },
     { href: "/settings", label: "Settings" },
+    { href: "/syllabus", label: "Syllabus" },
   ],
   TEACHER: [
     { href: "/my-students", label: "My Students" },
     { href: "/attendance", label: "Attendance" },
     { href: "/marks-entry", label: "Marks Entry" },
+    { href: "/syllabus", label: "Syllabus" },
   ],
   ASSISTANT: [
   { href: "/students", label: "Students" },
   { href: "/my-students", label: "My Students" },
   { href: "/attendance", label: "Attendance" },
+  { href: "/syllabus", label: "Syllabus" },
 ],
   PARENT: [
     { href: "/my-child", label: "My Child" },

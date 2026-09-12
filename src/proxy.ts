@@ -18,6 +18,7 @@ const ROLE_ROUTES: { prefix: string; roles: string[] }[] = [
   { prefix: "/export", roles: ["ADMIN"] },
   { prefix: "/attendance", roles: ["ADMIN", "TEACHER", "ASSISTANT"] },
   { prefix: "/marks-entry", roles: ["ADMIN", "TEACHER"] },
+  { prefix: "/syllabus", roles: ["ADMIN", "TEACHER", "ASSISTANT"] },
   { prefix: "/my-students", roles: ["ADMIN", "TEACHER", "ASSISTANT"] },
   { prefix: "/my-child", roles: ["PARENT"] },
   { prefix: "/progress", roles: ["PARENT"] },
