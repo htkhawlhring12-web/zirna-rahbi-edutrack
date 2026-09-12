@@ -146,7 +146,7 @@ model Subject {
   studentSubjects   StudentSubject[]
   assessments       Assessment[]
   attendanceRecords AttendanceRecord[]
-  chapters          Chapter[]
+  units             Unit[]
 
   @@map("subjects")
 }
@@ -295,10 +295,10 @@ model AtRiskSettings {
 }
 
 // ---------------------------------------------------------------------------
-// CHAPTER / SYLLABUS PROGRESS
+// UNITS, CHAPTERS & SYLLABUS PROGRESS
 // ---------------------------------------------------------------------------
 
-model Chapter {
+model Unit {
   id         String     @id @default(uuid())
   subjectId  String     @map("subject_id")
   subject    Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
@@ -307,9 +307,23 @@ model Chapter {
   orderIndex Int        @default(0) @map("order_index")
   createdAt  DateTime   @default(now()) @map("created_at")
 
-  progress ChapterProgress?
+  chapters Chapter[]
 
   @@index([subjectId, classLevel])
+  @@map("units")
+}
+
+model Chapter {
+  id         String   @id @default(uuid())
+  unitId     String   @map("unit_id")
+  unit       Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  title      String
+  orderIndex Int      @default(0) @map("order_index")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  progress ChapterProgress?
+
+  @@index([unitId])
   @@map("chapters")
 }
 
