@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import type { ClassLevel } from "@prisma/client";
 import { CLASS_LABELS, CLASS_OPTIONS } from "@/lib/constants";
 import { BulkReportCardForm } from "@/components/forms/bulk-report-card-form";
-
+import { BulkAssignSubjectForm } from "@/components/forms/bulk-assign-subject-form";
 export default async function StudentsPage({
   searchParams,
 }: {
@@ -131,7 +131,16 @@ export default async function StudentsPage({
         )}
       </form>
 
-            <section className="mt-6">
+                  <section className="mt-6">
+        <h2 className="text-sm font-medium text-slate-700">
+          Bulk-assign a subject to a whole class
+        </h2>
+        <div className="mt-2 rounded-lg border border-slate-200 bg-white p-4">
+          <BulkAssignSubjectForm subjects={subjects} staff={staff} />
+        </div>
+      </section>
+
+      <section className="mt-6">
         <h2 className="text-sm font-medium text-slate-700">
           Generate report cards for a whole class
         </h2>
