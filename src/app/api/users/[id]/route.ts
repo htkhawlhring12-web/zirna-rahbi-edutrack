@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import { requireRole, getCurrentUser } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type RouteParams = { params: Promise<{ id: string }> };
 
-// DELETE /api/users/[id] -- admin removes a staff account (teacher,
-// assistant, or another admin). Removes both the login (Supabase Auth)
-// and the profile row in our own database. An admin cannot delete their
-// own account this way, to avoid accidentally locking everyone out.
+// DELETE /api/users/[id] -- admin removes a staff account. Refuses if the
+// person has any attendance, tests, marks, fee entries or report cards
+// tied to them. Use "Deactivate" for staff who have left. An admin cannot
+// delete their own account.
 export async function DELETE(_request: Request, { params }: RouteParams) {
   let currentUser;
   try {
@@ -29,6 +29,26 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
   const user = await db.user.findUnique({ where: { id } });
   if (!user) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 });
+  }
+
+  const [attendance, assessments, marks, fees, reportCards, chapters] =
+    await Promise.all([
+      db.attendanceRecord.count({ where: { markedBy: id } }),
+      db.assessment.count({ where: { createdBy: id } }),
+      db.assessmentMark.count({ where: { enteredBy: id } }),
+      db.feePayment.count({ where: { recordedBy: id } }),
+      db.reportCard.count({ where: { generatedBy: id } }),
+      db.chapterProgress.count({ where: { completedBy: id } }),
+    ]);
+
+  if (attendance + assessments + marks + fees + reportCards + chapters > 0) {
+    return NextResponse.json(
+      {
+        error:
+          "This person has records tied to them (attendance, tests, marks or fees). Deleting would erase or break that history. Use Deactivate instead.",
+      },
+      { status: 409 }
+    );
   }
 
   const supabaseAdmin = createAdminClient();

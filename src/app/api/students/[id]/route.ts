@@ -68,10 +68,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   return NextResponse.json({ student });
 }
 
-// DELETE /api/students/[id] -- admin permanently removes a student and
-// everything tied to them (subjects, attendance, marks, fees, report
-// cards, parent links). This cannot be undone, so the button on the
-// detail page asks for confirmation before calling this.
+// DELETE /api/students/[id] -- admin removes a student. Refuses if the
+// student has any fee, attendance, marks or report card records, because
+// deleting would permanently wipe that history. Use "Mark as inactive"
+// for students who have left; delete is only for mistakes.
 export async function DELETE(_request: Request, { params }: RouteParams) {
   try {
     await requireRole(["ADMIN"]);
@@ -86,9 +86,22 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: "Student not found" }, { status: 404 });
   }
 
-  // Prisma's onDelete: Cascade (set in schema.prisma) handles removing the
-  // related subjects, attendance records, marks, fee payments, report
-  // cards, and parent links automatically when the student is deleted.
+  const [fees, attendance, marks, reportCards] = await Promise.all([
+    db.feePayment.count({ where: { studentId: id } }),
+    db.attendanceRecord.count({ where: { studentId: id } }),
+    db.assessmentMark.count({ where: { studentId: id } }),
+    db.reportCard.count({ where: { studentId: id } }),
+  ]);
+
+  if (fees + attendance + marks + reportCards > 0) {
+    return NextResponse.json(
+      {
+        error: `This student has records (${fees} fees, ${attendance} attendance, ${marks} marks, ${reportCards} report cards). Deleting would erase them. Use "Mark as inactive" instead.`,
+      },
+      { status: 409 }
+    );
+  }
+
   await db.student.delete({ where: { id } });
 
   return NextResponse.json({ success: true });
