@@ -242,8 +242,9 @@ model FeeStructure {
 
 model FeePayment {
   id             String    @id @default(uuid())
-  studentId      String    @map("student_id")
-  student        Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  studentId      String?   @map("student_id")
+  student        Student?  @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  studentName    String    @default("") @map("student_name")
   amountDue      Float     @map("amount_due")
   amountPaid     Float     @default(0) @map("amount_paid")
   dueDate        DateTime  @map("due_date")
